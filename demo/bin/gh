@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Pretend the GitHub CLI isn't signed in, so the demo never picks up a real token.
+exit 1

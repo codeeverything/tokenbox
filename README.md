@@ -2,6 +2,10 @@
 
 See, check, refresh and create your Composer auth tokens across every repo and account.
 
+**Website and docs: https://codeeverything.github.io/tokenbox/**
+
+![tokenbox status](docs/assets/screens/status.png)
+
 ```
   tokenbox  composer credentials
 

@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tokenbox docs</title>
+<meta name="description" content="Install, commands, configuration, health checks, the Composer plugin and JSON output for tokenbox, the Composer auth token checker.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="logo" href="./" aria-label="tokenbox home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="7" width="26" height="20" rx="5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M10 7V5.5A2.5 2.5 0 0 1 12.5 3h7A2.5 2.5 0 0 1 22 5.5V7" fill="none" stroke="currentColor" stroke-width="2.6"/><circle cx="16" cy="17" r="4" fill="#1f9d69"/></svg>
+      tokenbox
+    </a>
+    <nav aria-label="Main">
+      <a class="hide-sm" href="./#plugin">Composer plugin</a>
+      <a href="docs.html" aria-current="page">Docs</a>
+      <a class="gh" href="https://github.com/codeeverything/tokenbox">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+      <button class="theme-toggle" type="button" aria-label="Switch light or dark theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.4 5.4 0 0 1-7.54-7.54C12.92 3.04 12.46 3 12 3z"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap docs">
+  <aside class="toc" aria-label="On this page">
+    <p>Start</p>
+    <a href="#install">Install</a>
+    <a href="#first-run">Your first run</a>
+    <p>Commands</p>
+    <a href="#status">status</a>
+    <a href="#show">show</a>
+    <a href="#scan">scan</a>
+    <a href="#add">add</a>
+    <a href="#refresh">refresh</a>
+    <a href="#remove">remove</a>
+    <a href="#config">config</a>
+    <p>How it works</p>
+    <a href="#where">Where it looks</a>
+    <a href="#sources">Where credentials come from</a>
+    <a href="#used-by">“Used by”</a>
+    <a href="#health">Health checks</a>
+    <a href="#expiry">Expiry warnings</a>
+    <p>Composer &amp; automation</p>
+    <a href="#plugin">Composer plugin</a>
+    <a href="#json">JSON &amp; CI</a>
+    <a href="#scripted">Scripted setup</a>
+    <p>More</p>
+    <a href="#security">Security</a>
+    <a href="#troubleshooting">Troubleshooting</a>
+    <a href="#roadmap">Roadmap</a>
+  </aside>
+
+  <main class="prose">
+    <h1>tokenbox docs</h1>
+    <p class="lead">tokenbox shows every Composer credential on your machine, checks whether it still works, tells you when it expires and which projects use it, and walks you through replacing it. It is a command-line tool and a Composer plugin in one package.</p>
+
+    <h2 id="install">Install</h2>
+    <p>You need PHP 8.2 or newer and Composer 2. Install tokenbox globally so the command is on your <code>PATH</code> and the plugin runs inside every <code>composer install</code>.</p>
+    <p>tokenbox isn’t on Packagist yet, so point Composer at the GitHub repository:</p>
+<pre><span class="cmd">composer global config repositories.tokenbox vcs https://github.com/codeeverything/tokenbox</span>
+<span class="cmd">composer global config allow-plugins.tokenbox/tokenbox true</span>
+<span class="cmd">composer global require tokenbox/tokenbox:dev-main</span></pre>
+    <p>Make sure Composer’s global bin folder is on your <code>PATH</code>. If <code>tokenbox</code> isn’t found, add this to your shell profile:</p>
+<pre><span class="cmd">export PATH="$(composer global config bin-dir --absolute -q):$PATH"</span></pre>
+    <p>The <code>allow-plugins</code> line lets the Composer plugin run. Leave it out if you only want the command. You can also turn the plugin off at any time with <code>TOKENBOX_DISABLE=1</code>.</p>
+
+    <h3>From a checkout</h3>
+<pre><span class="cmd">git clone https://github.com/codeeverything/tokenbox ~/Code/tokenbox</span>
+<span class="cmd">cd ~/Code/tokenbox &amp;&amp; composer install</span>
+<span class="cmd">ln -s "$PWD/bin/tokenbox" /usr/local/bin/tokenbox</span></pre>
+    <p>To try the plugin from a checkout, install it globally from a path repository:</p>
+<pre><span class="cmd">composer global config repositories.tokenbox '{"type":"path","url":"~/Code/tokenbox"}'</span>
+<span class="cmd">composer global config allow-plugins.tokenbox/tokenbox true</span>
+<span class="cmd">composer global require tokenbox/tokenbox:@dev</span></pre>
+
+    <h2 id="first-run">Your first run</h2>
+    <p>Run <code>tokenbox</code> with no arguments. It looks for Composer projects in <code>~/Code</code>, <code>~/Sites</code>, <code>~/Projects</code> and <code>~/src</code> (whichever exist) plus the current folder, reads every credential it can find, and checks each one live.</p>
+    <figure class="shot"><a href="assets/screens/status.png"><img src="assets/screens/status.png" width="1630" height="770" alt="tokenbox status output with seven credentials, their health, expiry and usage, followed by warnings and suggested commands"></a></figure>
+    <p class="caption">Every screenshot on this site is real tokenbox output from a demo machine. The tokens are fake and the provider APIs are stubbed; the recording scripts are in <a href="https://github.com/codeeverything/tokenbox/tree/main/demo"><code>demo/</code></a>.</p>
+    <p>Read it left to right: health, host, credential type, the account the token signs in as, the masked token, when it expires, which file it lives in, and which projects use it. Below the table, each problem has the command that fixes it.</p>
+    <p>If your projects live somewhere else, tell tokenbox once:</p>
+<pre><span class="cmd">tokenbox config paths add ~/work ~/clients</span></pre>
+
+    <h2 id="status">tokenbox status</h2>
+    <p>The default command, so <code>tokenbox</code> on its own runs it. Alias: <code>ls</code>.</p>
+    <dl class="opts">
+      <dt>-o, --offline</dt><dd>List what’s configured without contacting any provider.</dd>
+      <dt>-w, --warn-days=N</dt><dd>Flag tokens expiring within N days. Defaults to the <code>warn_days</code> setting (14).</dd>
+      <dt>--json</dt><dd>Machine-readable output. See <a href="#json">JSON &amp; CI</a>.</dd>
+      <dt>-v</dt><dd>Also show each token’s scopes.</dd>
+      <dt>-p, --path=DIR</dt><dd>Scan this folder instead of the configured ones. Repeatable. Works on every command.</dd>
+    </dl>
+    <p>Health is one of:</p>
+    <table>
+      <thead><tr><th>Badge</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>● ok</code></td><td>The provider accepted it.</td></tr>
+        <tr><td><code>◐ 6d left</code></td><td>Works, but expires within <code>warn_days</code>.</td></tr>
+        <tr><td><code>✕ expired</code></td><td>The provider reports an expiry date in the past.</td></tr>
+        <tr><td><code>✕ invalid</code></td><td>The provider rejected it (HTTP 401/403): revoked, expired or wrong.</td></tr>
+        <tr><td><code>? unverified</code></td><td>The host answered, but there was nothing to test the credential against.</td></tr>
+        <tr><td><code>○ offline</code></td><td>The host couldn’t be reached.</td></tr>
+        <tr><td><code>· unchecked</code></td><td>You ran with <code>--offline</code>.</td></tr>
+      </tbody>
+    </table>
+    <p>The exit code is <code>1</code> if any credential is expired or invalid, otherwise <code>0</code>.</p>
+
+    <h2 id="show">tokenbox show &lt;host&gt;</h2>
+    <p>Everything about one credential: health, type, account, scopes, expiry, the file it’s stored in, and every project that uses it with the reason. Alias: <code>why</code>. If more than one credential matches the host (say a global one and a project override), you pick which.</p>
+    <figure class="shot"><a href="assets/screens/show.png"><img src="assets/screens/show.png" width="1200" height="820" loading="lazy" alt="tokenbox show github.com, listing status, scopes, expiry, storage location, the project that needs it and the projects that only use it for rate limits"></a></figure>
+    <p>The output has up to three lists:</p>
+    <ul>
+      <li><strong>Used by</strong>: projects that need this credential, e.g. <em>2 repositories in composer.json: acme/checkout-sdk, acme/feature-flags</em>.</li>
+      <li><strong>Also sent for API rate limits</strong>: GitHub only. Projects with public GitHub packages that would work without the token, just slower.</li>
+      <li><strong>Overridden by a project auth.json</strong>: projects that would use this host but have their own credential for it.</li>
+    </ul>
+    <p>Run it before you revoke a token, so you know what will break.</p>
+
+    <h2 id="scan">tokenbox scan</h2>
+    <p>Lists Composer projects and the private hosts each one needs, marked <code>✓</code> covered, <code>✕</code> missing or <code>○</code> public (the repository answered without credentials, like wpackagist.org). Projects with only public packages are hidden unless you pass <code>--all</code>. A project with its own <code>auth.json</code> is marked.</p>
+    <figure class="shot" style="max-width:1050px"><a href="assets/screens/scan.png"><img src="assets/screens/scan.png" width="1050" height="700" loading="lazy" alt="tokenbox scan --all listing eleven projects and their private hosts"></a></figure>
+    <dl class="opts">
+      <dt>-a, --all</dt><dd>Include projects with no private hosts.</dd>
+      <dt>--json</dt><dd>Projects, hosts and the credentials that cover each.</dd>
+    </dl>
+
+    <h2 id="add">tokenbox add</h2>
+    <p>Guided setup for a new credential:</p>
+    <ol>
+      <li>Pick the provider (guessed from the host when it can be).</li>
+      <li>Enter the host.</li>
+      <li>Choose where to save it: globally, or in the <code>auth.json</code> of one of the projects that needs this host.</li>
+      <li>tokenbox shows the provider’s “new token” page with the right scopes and a description filled in, and offers to open it.</li>
+      <li>Paste the token (input is hidden). tokenbox checks it against the provider before saving.</li>
+    </ol>
+    <dl class="opts">
+      <dt>--provider=ID</dt><dd><code>github</code>, <code>github-enterprise</code>, <code>gitlab</code>, <code>bitbucket</code>, <code>private-packagist</code>, <code>forgejo</code>, <code>http-basic</code> or <code>bearer</code>.</dd>
+      <dt>--host=HOST</dt><dd>The host, e.g. <code>github.com</code> or <code>repo.example.com:8443</code>.</dd>
+      <dt>--project=DIR</dt><dd>Save to that project’s <code>auth.json</code> instead of the global one.</dd>
+      <dt>--stdin</dt><dd>Read the secret from stdin. See <a href="#scripted">Scripted setup</a>.</dd>
+    </dl>
+    <p>If the check fails you’re asked whether to save it anyway. The default is no.</p>
+
+    <h2 id="refresh">tokenbox refresh [host]</h2>
+    <p>Shows the current credential’s health, then runs the same guided flow as <code>add</code> with the provider, host and file already known, and replaces the credential in place. Aliases: <code>renew</code>, <code>rotate</code>.</p>
+    <figure class="shot"><video src="assets/screens/refresh.mp4" poster="assets/screens/refresh.png" width="1180" height="670" controls muted playsinline aria-label="Recording of tokenbox refresh replacing a revoked GitHub Enterprise token"></video></figure>
+    <p>For GitHub hosts, if you’re signed in to the GitHub CLI tokenbox offers to use its token instead of creating a new one. That token never expires, but it stops working if you run <code>gh auth logout</code>.</p>
+    <div class="callout"><p>Refreshing doesn’t revoke the old token at the provider. If it may have leaked, revoke it from the provider’s settings page too.</p></div>
+
+    <h2 id="remove">tokenbox remove [host]</h2>
+    <p>Removes a credential from its <code>auth.json</code> after you confirm. The previous file is kept as <code>auth.json.bak</code>. Alias: <code>rm</code>. Like refresh, this doesn’t revoke the token at the provider.</p>
+
+    <h2 id="config">tokenbox config</h2>
+    <p>Shows tokenbox’s settings and exactly which folders it’s scanning right now. Settings live in <code>~/.config/tokenbox/config.json</code> (or <code>$XDG_CONFIG_HOME/tokenbox/config.json</code>, or wherever <code>$TOKENBOX_CONFIG</code> points). Only values you’ve changed are written.</p>
+    <figure class="shot" style="max-width:1050px"><a href="assets/screens/config.png"><img src="assets/screens/config.png" width="1050" height="480" loading="lazy" alt="tokenbox config output listing paths, exclude, depth, warn_days and warn_no_expiry, then the folders being scanned"></a></figure>
+<pre><span class="cmd">tokenbox config paths add ~/Code ~/Sites</span>     <span class="c"># scan these folders</span>
+<span class="cmd">tokenbox config paths remove ~/Sites</span>
+<span class="cmd">tokenbox config exclude add legacy</span>            <span class="c"># skip any folder named "legacy"</span>
+<span class="cmd">tokenbox config exclude add '~/Code/archive/*'</span> <span class="c"># or a glob on the full path</span>
+<span class="cmd">tokenbox config depth 4</span>                       <span class="c"># how deep to look (default 3)</span>
+<span class="cmd">tokenbox config warn_days 30</span>                  <span class="c"># expiry warning window (default 14)</span>
+<span class="cmd">tokenbox config warn_no_expiry false</span>          <span class="c"># stop flagging tokens that never expire</span></pre>
+    <table>
+      <thead><tr><th>Setting</th><th>Default</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>paths</code></td><td>not set</td><td>Folders to scan for Composer projects.</td></tr>
+        <tr><td><code>exclude</code></td><td>none</td><td>A folder name (matched anywhere) or a glob on the full path.</td></tr>
+        <tr><td><code>depth</code></td><td>3</td><td>How many folders deep to look under each path.</td></tr>
+        <tr><td><code>warn_days</code></td><td>14</td><td>Mark tokens expiring within this many days.</td></tr>
+        <tr><td><code>warn_no_expiry</code></td><td>true</td><td>Flag tokens that never expire.</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="where">Where tokenbox looks</h2>
+    <p>The first of these that is set wins, and the current folder is always added:</p>
+    <ol>
+      <li><code>--path &lt;dir&gt;</code> on the command line (repeatable)</li>
+      <li><code>$TOKENBOX_PATHS</code> (colon-separated)</li>
+      <li><code>paths</code> in the config file</li>
+      <li>whichever of <code>~/Code</code>, <code>~/Sites</code>, <code>~/Projects</code>, <code>~/src</code> exist</li>
+    </ol>
+    <p>Every run says where it looked and why. <code>vendor</code>, <code>node_modules</code>, dot-folders and <code>build</code>, <code>dist</code>, <code>cache</code> and <code>storage</code> folders are always skipped, and symlinked folders aren’t followed. Scanning happens live on each run, so there’s no cache to refresh.</p>
+
+    <h2 id="sources">Where credentials come from</h2>
+    <p>Composer reads auth from three places, and tokenbox shows all of them:</p>
+    <ol>
+      <li><strong>Global</strong>: <code>$COMPOSER_HOME/auth.json</code>, usually <code>~/.composer/auth.json</code> or <code>~/.config/composer/auth.json</code>.</li>
+      <li><strong>Project</strong>: an <code>auth.json</code> next to a project’s <code>composer.json</code>. It overrides the global one for that project.</li>
+      <li><strong><code>COMPOSER_AUTH</code></strong>: the environment variable. Shown, but read-only; tokenbox won’t try to edit your environment.</li>
+    </ol>
+    <p>All the types Composer supports are understood: <code>github-oauth</code>, <code>gitlab-token</code>, <code>gitlab-oauth</code>, <code>bitbucket-oauth</code>, <code>http-basic</code>, <code>bearer</code>, <code>forgejo-token</code> and <code>client-certificate</code>.</p>
+
+    <h2 id="used-by">How “Used by” is worked out</h2>
+    <p>A project uses a host if its <code>composer.json</code> lists a repository there, or its <code>composer.lock</code> downloads packages from it. <code>tokenbox show &lt;host&gt;</code> gives the reason for each project, e.g. <em>2 repositories in composer.json: acme/private-lib, acme/billing</em>.</p>
+    <p>GitHub is a special case. Composer sends your github.com token on every GitHub API call, so projects with only public GitHub packages still use it, but only to lift rate limits. Those are counted separately (“+10 for rate limits”) because they would still work without a token.</p>
+    <p>Project-level credentials apply only to their own project. Global credentials apply to every project that doesn’t override them.</p>
+
+    <h2 id="health">How health is checked</h2>
+    <p>Secrets are only ever sent to the host they are configured for.</p>
+    <table>
+      <thead><tr><th>Type</th><th>Check</th><th>Expiry known?</th></tr></thead>
+      <tbody>
+        <tr><td><code>github-oauth</code><br>github.com &amp; Enterprise</td><td><code>GET /user</code>: login and <code>X-OAuth-Scopes</code>. Warns if a classic token lacks <code>repo</code>.</td><td>Yes, from <code>github-authentication-token-expiration</code></td></tr>
+        <tr><td><code>gitlab-token</code>, <code>gitlab-oauth</code></td><td><code>GET /personal_access_tokens/self</code> and <code>/user</code></td><td>Yes, <code>expires_at</code>, plus revoked/active</td></tr>
+        <tr><td><code>bitbucket-oauth</code></td><td>Client-credentials grant</td><td>No</td></tr>
+        <tr><td><code>forgejo-token</code></td><td><code>GET /api/v1/user</code></td><td>No</td></tr>
+        <tr><td><code>http-basic</code>, <code>bearer</code><br>Private Packagist, Satis, Repman, Artifactory…</td><td><code>GET packages.json</code> on the repository URL from your projects</td><td>No</td></tr>
+        <tr><td><code>client-certificate</code></td><td>Reads the local certificate</td><td>Yes, <code>validTo</code></td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="expiry">Expiry warnings</h2>
+    <p>Tokens with an expiry date get a warning <code>warn_days</code> before they lapse (14 by default), so short-lived tokens aren’t a chore.</p>
+    <p>If the provider says a token has no expiry date (GitHub classic tokens, <code>gh</code> CLI tokens, GitLab tokens without <code>expires_at</code>), tokenbox shows <code>never ⚠</code> and suggests recreating it with one. A leaked token that never expires keeps working until someone notices. Turn this off with <code>tokenbox config warn_no_expiry false</code>.</p>
+    <p>For <code>http-basic</code> and <code>bearer</code> credentials the expiry can’t be known, so they show <code>unknown</code> rather than <code>never</code>.</p>
+
+    <h2 id="plugin">The Composer plugin</h2>
+    <p>With tokenbox installed globally and allowed as a plugin, <code>composer install</code>, <code>update</code>, <code>require</code>, <code>reinstall</code> and <code>create-project</code> get a guard:</p>
+    <ul>
+      <li><strong>Before the command runs</strong>, every repository in your <code>composer.json</code> is checked once.</li>
+      <li><strong>Before each download</strong>, any host not seen yet is checked. This covers mirrors, dist URLs and repositories pulled in by other packages.</li>
+    </ul>
+    <p>If a credential is rejected or expired, or a host clearly needs one and has none, you get the guided setup instead of a failed install:</p>
+    <figure class="shot"><video src="assets/screens/plugin.mp4" poster="assets/screens/plugin.png" width="1180" height="700" controls muted playsinline aria-label="Recording of composer install where tokenbox replaces a rejected credential and the install completes"></video></figure>
+    <p class="caption">Real Composer 2.8 against a local private repository whose saved password has been revoked.</p>
+    <p>The new credential is saved to <code>auth.json</code> <strong>and</strong> handed to the running Composer process, so the install carries on without a restart. Credentials that are merely expiring get a one-line reminder and nothing else.</p>
+    <p>“Clearly needs one” means a GitHub Enterprise or self-hosted GitLab domain (from Composer’s <code>github-domains</code> and <code>gitlab-domains</code>), or a Composer repository whose <code>packages.json</code> returns 401 or 403 anonymously. Public github.com is left alone without a token, because it works anonymously.</p>
+    <div class="callout"><p><strong>tokenbox never stops Composer.</strong> Saying no, running with <code>-n</code> or in CI (where you get a one-line hint instead), or any internal tokenbox error all let Composer continue as normal. Set <code>TOKENBOX_DISABLE=1</code> to turn the plugin off.</p></div>
+
+    <h2 id="json">JSON &amp; CI</h2>
+    <p><code>tokenbox status --json</code> is the stable contract for scripts, hooks, CI and editor integrations. It skips the spinner and colours, and keeps the exit code: <code>1</code> if anything is expired or invalid.</p>
+    <figure class="shot" style="max-width:1000px"><a href="assets/screens/json.png"><img src="assets/screens/json.png" width="1000" height="350" loading="lazy" alt="tokenbox status --json piped through jq, then exit code 1"></a></figure>
+<pre>{
+  "credentials": [
+    {
+      "host": "github.com",
+      "type": "github-oauth",
+      "provider": "GitHub",
+      "token": "ghp_…7Qa2",
+      "source": { "scope": "global", "path": "/Users/sam/.composer/auth.json", "label": "global" },
+      "health": {
+        "state": "expiring",
+        "account": "octocat",
+        "scopes": ["repo", "read:org"],
+        "expires_at": "2026-11-17T13:00:00+00:00",
+        "days_left": 6,
+        "never_expires": false,
+        "detail": null
+      },
+      "used_by": [
+        { "project": "acme/storefront", "dir": "/Users/sam/Code/acme/storefront",
+          "why": "2 repositories in composer.json: acme/checkout-sdk, acme/feature-flags, 64 locked packages download from it (mostly public)",
+          "rate_limit_only": false },
+        { "project": "acme/admin-portal", "dir": "/Users/sam/Code/acme/admin-portal",
+          "why": "71 locked packages download from it (mostly public) (public; token only lifts API rate limits)",
+          "rate_limit_only": true }
+      ]
+    }
+  ],
+  "gaps": [
+    { "project": "/Users/sam/Code/acme/admin-portal", "host": "nova.laravel.com" }
+  ]
+}</pre>
+    <p><code>state</code> is one of <code>ok</code>, <code>expiring</code>, <code>expired</code>, <code>invalid</code>, <code>unverified</code>, <code>unreachable</code> or <code>unchecked</code>.</p>
+    <h3>Catch expiring deploy tokens in CI</h3>
+    <p>Run it on a schedule in the environment that holds your deploy credentials, with a wider warning window:</p>
+<pre><span class="c"># fails the job if anything is expired or invalid</span>
+<span class="cmd">tokenbox status --json --warn-days=30 &gt; tokenbox.json</span>
+<span class="c"># also fail on anything expiring within 30 days</span>
+<span class="cmd">jq -e '[.credentials[] | select(.health.state == "expiring")] | length == 0' tokenbox.json</span></pre>
+
+    <h2 id="scripted">Scripted setup</h2>
+    <p>Pipe the secret in with <code>--stdin</code> and <code>-n</code> to skip prompts:</p>
+<pre><span class="cmd">echo "$TOKEN" | tokenbox add --provider=github --host=github.com --stdin -n</span></pre>
+    <p>For types with more than one field, pipe JSON:</p>
+<pre><span class="cmd">echo '{"username":"token","password":"…"}' | tokenbox add --provider=private-packagist --host=repo.packagist.com --stdin -n</span></pre>
+
+    <h2 id="security">Security</h2>
+    <ul>
+      <li>A secret is only ever sent to the host it’s configured for. For <code>http-basic</code> and <code>bearer</code>, probe URLs on any other host are skipped.</li>
+      <li>Output masks every secret: the first and last four characters for long tokens, the last four for shorter ones.</li>
+      <li>Every write keeps an <code>auth.json.bak</code> and sets both files to <code>chmod 600</code>.</li>
+      <li><code>tokenbox status</code> warns when an <code>auth.json</code> is readable by other users.</li>
+      <li>No network calls other than the checks above. No telemetry, no account, no cache on disk.</li>
+    </ul>
+    <div class="callout warn"><p>Project <code>auth.json</code> files contain secrets. Keep them out of git: add <code>auth.json</code> to the project’s <code>.gitignore</code>.</p></div>
+
+    <h2 id="troubleshooting">Troubleshooting</h2>
+    <h3>A project I expected isn’t listed</h3>
+    <p>Run <code>tokenbox config</code> to see which folders are being scanned and how deep. Raise <code>depth</code> or add the folder with <code>tokenbox config paths add</code>. Folders matched by <code>exclude</code> are listed with ✕.</p>
+    <h3>“no projects found” next to a credential</h3>
+    <p>No scanned project’s <code>composer.json</code> repositories or <code>composer.lock</code> download URLs mention that host. It may be unused, or the project lives outside your configured paths.</p>
+    <h3>A credential shows “? unverified”</h3>
+    <p>For <code>http-basic</code> and <code>bearer</code>, tokenbox needs a <code>packages.json</code> to test against. It uses the repository URLs from your projects, then <code>https://&lt;host&gt;/packages.json</code>. If neither exists, it can’t tell.</p>
+    <h3>GitHub says ok but private repos still fail</h3>
+    <p>A classic token without the <code>repo</code> scope can sign in but can’t read private repositories; tokenbox warns about this. Organisations using SAML SSO also need you to authorise the token for that organisation on GitHub.</p>
+    <h3>The plugin doesn’t seem to run</h3>
+    <p>Check <code>composer global config allow-plugins</code> includes <code>tokenbox/tokenbox</code>, that <code>TOKENBOX_DISABLE</code> isn’t set, and that you’re running interactively. Run Composer with <code>-v</code> to see tokenbox’s skipped checks.</p>
+
+    <h2 id="roadmap">Roadmap</h2>
+    <p>Planned, roughly in order. Ideas and pull requests are welcome on <a href="https://github.com/codeeverything/tokenbox/issues">GitHub</a>.</p>
+    <h3>Polish</h3>
+    <ul>
+      <li><code>tokenbox doctor</code>: fix file permissions, de-duplicate entries shadowed by project auth, flag tokens committed to git and project <code>auth.json</code> files missing from <code>.gitignore</code>.</li>
+      <li>Concurrent checks and a short-lived cache so <code>status</code> is instant.</li>
+      <li>Detect GitHub organisation SSO and link straight to the authorise page.</li>
+      <li>Desktop notifications a few days before a token expires.</li>
+    </ul>
+    <h3>Real rotation</h3>
+    <ul>
+      <li>GitLab: rotate in place via the API, with no browser trip.</li>
+      <li>Private Packagist: create and rotate tokens via its API.</li>
+      <li>Optionally keep secrets in macOS Keychain or 1Password and render <code>auth.json</code> from them.</li>
+    </ul>
+    <h3>Dev tool integrations</h3>
+    <ul>
+      <li><code>composer tokens</code> commands from the plugin.</li>
+      <li>An MCP server so coding agents can check and help refresh credentials, returning masked values only.</li>
+      <li>Editor status-bar items driven by <code>tokenbox status --json</code>.</li>
+    </ul>
+  </main>
+</div>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <a class="logo" href="./" style="font-size:17px">tokenbox</a>
+    <a href="./">Home</a>
+    <a href="https://github.com/codeeverything/tokenbox">GitHub</a>
+    <a href="https://github.com/codeeverything/tokenbox/issues">Report an issue</a>
+    <span class="right">MIT licensed. Screenshots are real output against demo data.</span>
+  </div>
+</footer>
+
+<template class="copy-template"><button class="copy" type="button" aria-label="Copy commands"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z"/></svg></button></template>
+<script src="assets/site.js"></script>
+</body>
+</html>

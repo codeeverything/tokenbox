@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# tokenbox, unmodified, with the demo HTTP stub in front of it.
+demo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+exec php -d auto_prepend_file="$demo/mock-http.php" "$demo/../bin/tokenbox" "$@"

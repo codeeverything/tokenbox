@@ -57,11 +57,13 @@ final class RefreshCommand extends AddCommand
             return $credentials[0];
         }
 
+        // String keys: given a plain list, select() returns the label instead of the key.
         $options = [];
-        foreach ($credentials as $i => $c) {
-            $options[$i] = "{$c->host}  ·  {$c->type}  ·  {$c->source->label}";
+        foreach ($credentials as $c) {
+            $options[$c->key()] = "{$c->host}  ·  {$c->type}  ·  {$c->source->label}";
         }
+        $key = select($label, $options);
 
-        return $credentials[select($label, $options)];
+        return array_values(array_filter($credentials, fn (Credential $c) => $c->key() === $key))[0];
     }
 }

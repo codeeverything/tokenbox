@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Don't open browser tabs while recording.
+exit 0

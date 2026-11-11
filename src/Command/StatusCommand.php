@@ -124,6 +124,10 @@ final class StatusCommand extends BaseCommand
             if ($h->detail && $h->state !== Health::UNCHECKED) {
                 $colour = $h->isProblem() ? 'yellow' : 'gray';
                 $lines[] = "<fg=$colour>!</> <options=bold>{$c->host}</> {$h->detail}";
+            } elseif ($h->state === Health::EXPIRING) {
+                $lines[] = "<fg=yellow>!</> <options=bold>{$c->host}</> token expires in {$h->daysLeft()}d";
+            } elseif ($h->state === Health::EXPIRED) {
+                $lines[] = "<fg=yellow>!</> <options=bold>{$c->host}</> token expired ".abs((int) $h->daysLeft()).'d ago';
             }
             if ($warnNever && $h->neverExpires()) {
                 $lines[] = str_starts_with((string) $c->secret(), 'gho_')
