@@ -1,0 +1,32 @@
+#!/usr/bin/env php
+<?php
+
+use Symfony\Component\Console\Application;
+use Tokenbox\Command;
+
+foreach ([__DIR__.'/../vendor/autoload.php', __DIR__.'/../../../autoload.php'] as $autoload) {
+    if (is_file($autoload)) {
+        require $autoload;
+        break;
+    }
+}
+
+$app = new Application('tokenbox', '0.1.0');
+$app->addCommands([
+    new Command\StatusCommand(),
+    new Command\ScanCommand(),
+    new Command\AddCommand(),
+    new Command\RefreshCommand(),
+    new Command\RemoveCommand(),
+    new Command\ShowCommand(),
+    new Command\ConfigCommand(),
+]);
+$app->setDefaultCommand('status');
+
+// Bare `tokenbox -p ~/Code` should mean `tokenbox status -p ~/Code`, not a command called "~/Code".
+$argv = $_SERVER['argv'];
+$first = $argv[1] ?? null;
+if ($first === null || ($first[0] === '-' && !in_array($first, ['-h', '--help', '-V', '--version'], true))) {
+    array_splice($argv, 1, 0, 'status');
+}
+$app->run(new Symfony\Component\Console\Input\ArgvInput($argv));
